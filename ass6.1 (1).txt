@@ -1,0 +1,385 @@
+In [1]: import tensorflow as tf
+from tensorflow import keras
+from tensorflow.keras.applications import VGG16
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import Dense, Flatten
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+import numpy as np
+
+2023-11-93 06:10:57.056062: I tensorflow/core/platform/cpu_feature_guard.cc:1
+82] This TensorFlow binary is optimized to use available CPU instructions in
+performance-critical operations.
+
+To enable the following instructions: AVX2 FMA, in other operations, rebuild
+TensorFlow with the appropriate compiler flags.
+
+Pre processing img data
+
+In [2]: train_dir = "Datasets/cifar-10-img/train"
+test_dir = "Datasets/cifar-10-img/test”
+
+train_datagen = ImageDataGenerator(
+rescale=1.0 / 255,
+)
+
+test_datagen = ImageDataGenerator (
+rescale=1.0 / 255,
+)
+
+# here batch_size is the number of images in each batch
+
+train_batch_size = 5000
+
+train_generator = train_datagen.flow_from_directory(
+train_dir,
+target_size=(32, 32),
+batch_size=train_batch_size,
+class_mode='categorical'
+
+)
+
+test_batch_size = 1000
+
+test_generator = test_datagen.flow_from_directory(
+test_dir,
+target_size=(32, 32),
+batch_size=test_batch_size,
+class_mode='categorical'
+
+)
+
+Found 40079 images belonging to 10 classes.
+Found 9921 images belonging to 1@ classes.
+
+Selecting only first batch with 5000 images as train and test data
+In [3]: x train, y_train = train_generator[@]
+x_test, y_test = test_generator[@]
+
+print(len(x_train))
+print(len(x_test))
+
+5000
+1000
+
+a. Load in a pre-trained CNN model trained on a large dataset
+
+In [4]: # Load VGG16 without top Layers
+weights_path = "vgg16 weights_tf_dim_ordering tf_kernels_notop.h5"
+base_model = VGG16(weights=weights_path, include_top=False, input_shape=(32, 3
+
+b. Freeze parameters (weights) in model’s lower convolutional layers
+
+In [5]: for layer in base_model.layers:
+layer.trainable = False
+
+c. Add custom classifier with several layers of trainable parameters to model
+
+In [6]: Flatten() (base_model. output)
+
+Dense(256, activation='relu')(x)
+tf.keras.layers.Dropout(@.3)(x)
+Dense(256, activation='relu' )(x)
+tf.keras. layers .Dropout(@.3) (x)
+
+predictions = Dense(10, activation='softmax' ) (x)
+
+4
+x
+x
+x
+x
+
+# Create the model
+
+model = Model(inputs=base_model.input, outputs=predictions)
+
+# Compile the model
+
+model.compile(optimizer="adam", loss='categorical_crossentropy', metrics=['acc
+
+d. Train classifier layers on training data available for task
+In [7]: # Train the model
+model.fit(x_train, y_train, batch_size=64, epochs=10, validation_data=(x_test,
+
+Epoch 1/10
+
+79/79 [=sssssssssessessssssssssss====] - 10s 119ms/step - loss: 1.953@ - accu
+racy: @.288@ - val_loss: 1.60@6 - val_accuracy: 0.4470
+
+Epoch 2/10
+
+79/79 [=sssssssssssssssssssssss======] - 9s 113ms/step - loss: 1.5765 - accur
+acy: @.4372 - val_loss: 1.4799 - val_accuracy: @.4570
+
+Epoch 3/10
+
+79/79 [ssssssssssssssssss=ss=========] - 9s 108ms/step - loss: 1.4546 - accur
+acy: 0.4854 - val_loss: 1.4637 - val_accuracy: @.4790
+
+Epoch 4/10
+
+79/79 [sssssssssssessssssscssssssss==] - 95 113ms/step - loss: 1.3586 - accur
+acy: @.5148 - val_loss: 1.3521 - val_accuracy: @.5110
+
+Epoch 5/10
+
+79/79 [sssssssssssssssssssss==s======] - 95 113ms/step - loss: 1.2805 - accur
+acy: @.5414 - val_loss: 1.3299 - val_accuracy: @.525@
+
+Epoch 6/10
+
+79/79 [sssssssssssssssssssss=========] - 95 112ms/step - loss: 1.2203 - accur
+acy: 8.5698 - val_loss: 1.3169 - val_accuracy: @.5310
+
+Epoch 7/10
+
+79/79 [ssssssssssssssssssssssssssss==] - 9s 115ms/step - loss: 1.1837 - accur
+acy: @.5808 - val_loss: 1.3618 - val_accuracy: 0.5180
+
+Epoch 8/10
+
+79/79 [psssscsssscsscsssscsssssscs=s=] - 9s 116ms/step - loss: 1.1292 - accur
+acy: @.5976 - val_loss: 1.3352 - val_accuracy: @.5310
+
+Epoch 9/10
+
+79/79 [assssessssecsscsssssssssssc====] - 85 104ms/step - loss: 1.0966 - accur
+
+acy: 9.6126 - val_loss: 1.3058 - val_accuracy: @.5450
+
+Epoch 10/10
+
+79/79 [ssssssssssssssssssscsssss=s===] - 85 107ms/step - loss: 1.0356 - accur
+acy: @.6314 - val_loss: 1.3351 - val_accuracy: 90.5250
+
+Out[7]: <keras.src.callbacks.History at @x7fedd@3117d@>
+
+e. Fine-tune hyper parameters and unfreeze more layers as needed
+In [8]:
+
+Out[8]:
+
+base_model = VGG16(weights=weights_path, include_top=False, input_shape=(32, 3
+
+# freeze all Layers first
+
+for layer in base _model.layers:
+layer.trainable = False
+
+# unfreeze Last 4 Layers of base model
+
+for layer in base_model.layers[len(base_model.layers) - 4:]:
+
+layer.trainable = True
+# fine-tuning hyper parameters
+Flatten() (base_model. output)
+Dense(256, activation='relu' )(x)
+tf.keras. layers .Dropout(@.3) (x)
+Dense(512, activation='relu')(x)
+= tf.keras.layers.Dropout(6.3) (x)
+
+x «KKK XK
+i
+
+predictions = Dense(1@, activation='softmax')(x)
+
+# Create the model
+
+model = Model(inputs=base_model.input, outputs=predictions)
+
+# Compile the model
+
+model. compile (optimizer=Adam(learning_rate=@.001), loss='categorical_crossentr
+
+# training fine tuned model
+
+model.fit(x_train, y_train, batch_size=64, epochs=10, validation_data=(x_test,
+
+Epoch 1/10
+
+79/79 [ssssssessssssssssssssss===
+
+racy: @.2466 - val_loss:
+Epoch 2/18
+
+79/79 [ssssssessssssssssssssss===
+
+racy: 8.5026 - val_loss: 1.3817
+Epoch 3/10
+
+79/79 [ssssssesssssssssssssssss==
+
+racy: @.613@ - val_loss:
+Epoch 4/10
+
+79/79 [=sssssssssssesesesssssss=
+
+racy: @.6676 - val_loss:
+Epoch 5/10
+
+79/79 [ssssssssssssssssssssssss==
+
+racy: @.7188 - val_loss:
+Epoch 6/10
+
+79/79 [ssssssessssssssssssssss===
+
+racy: @.749@ - val_loss:
+Epoch 7/18
+
+79/79 [ssssssesssssssssssssssss==
+
+racy: 0.7964 - val_loss:
+Epoch 8/10
+
+79/79 [sssssssssssssssssssssssss=
+
+racy: @.8158 - val_loss:
+Epoch 9/10
+
+79/79 [ssssssssssssssssssssssss==
+
+racy: @.8510 - val_loss:
+Epoch 10/10
+
+racy: @.8834 - val_loss: 1.6347
+
+<keras.src.callbacks.History at
+
+====] - 52s 651ms/step
+
+val_accuracy: @.4270
+
+====] - 51s 649ms/step
+
+val_accuracy: 9.5110
+
+====] - 48s 608ms/step
+
+val_accuracy: @.5650
+
+====] - 48s 606ms/step
+
+val_accuracy: 0.5780
+
+====] - 47s 593ms/step
+
+val_accuracy: 0.6280
+
+====] - 48s 604ms/step
+
+val_accuracy: 9.6320
+
+====] - 48s 607ms/step
+
+val_accuracy: 0.64990
+
+====] - 52s 658ms/step
+
+val_accuracy: @.6430
+
+====] - 51s 650ms/step
+
+val_accuracy: @.6470
+
+====] - 49s 625ms/step
+
+val_accuracy: 9.6510
+
+@x7Fedbe54a450>
+
+loss:
+
+loss:
+
+loss:
+
+loss:
+
+loss:
+
+loss:
+
+loss:
+
+loss:
+
+loss:
+
+loss:
+
+-9810
+
+- 3616
+
+- 1024
+
+-9341
+
+-8194
+
+-7217
+
+- 6066
+
+-5376
+
+-4506
+
+-3589
+
+accu
+
+accu
+
+accu
+
+accu
+
+accu
+
+accu
+
+accu
+
+accu
+
+accu
+
+accu
+In [10]:
+
+In [11]:
+
+In [19]:
+
+import matplotlib.pyplot as plt
+predicted_value = model.predict(x_test)
+
+32/32 [Sssssssssssssssssssssssssss===] - 2s 65ms/step
+
+labels = list(test_generator.class_indices.keys())
+
+n = 890
+
+plt.imshow(x_test[n])
+
+print("Preditcted: ",labels[np.argmax(predicted_value[n])])
+print("Actual: ", labels[np.argmax(y_test[n])])
+
+Preditcted: frog
+Actual: frog
+
+0
+
+10
+
+15
+
+20
+
+25
+
+30
+
